@@ -42,3 +42,12 @@ data/
 
 # Exam paper PDF - do not redistribute
 B.pdf
+
+# Document source files - only the final report PDF goes to the repo
+*.odt
+*.docx
+*.doc
+.~lock.*
+
+# Local credential dump from Atlas onboarding
+atlas-credentials*.env

@@ -1,81 +1,92 @@
-import { useApiLog } from '../context/ApiLogContext';
-import { IconTrash } from './icons';
+import { useApiLog } from '../context/ApiLogContext'
 
-/** 2xx -> s-2xx, 404 -> s-4xx, 0 (network failure) -> s-err */
+/** 200 -> s-2xx, 404 -> s-4xx, 0 (never reached server) -> s-err */
 function statusClass(status) {
-  if (!status) return 's-err';
-  return `s-${Math.floor(status / 100)}xx`;
+  if (!status) return 's-err'
+  return `s-${Math.floor(status / 100)}xx`
 }
 
-/** Strip the origin so rows show "/api/v1/trainers", not the full URL. */
+/** Show "/api/v1/trainers" instead of the whole absolute URL. */
 function shortPath(path) {
   try {
-    return new URL(path, window.location.origin).pathname;
+    const u = new URL(path, window.location.origin)
+    return u.pathname + u.search
   } catch {
-    return path;
+    return path
   }
 }
 
 function formatMs(ms) {
-  if (ms < 1) return '<1ms';
-  if (ms < 1000) return `${Math.round(ms)}ms`;
-  return `${(ms / 1000).toFixed(2)}s`;
+  if (ms < 1) return '<1ms'
+  if (ms < 1000) return `${Math.round(ms)}ms`
+  return `${(ms / 1000).toFixed(2)}s`
+}
+
+function clockTime(ts) {
+  return new Date(ts).toLocaleTimeString('en-GB', { hour12: false })
 }
 
 /**
- * ApiLogPanel — live console of every request made through lib/api.js.
- * Sits beside the page content so the REST layer is visible while using
- * the app (and shows up nicely in report screenshots).
+ * ApiLogPanel — live console of every /api/ request the app makes.
+ * Sits side-by-side with page content so the REST layer is visible while
+ * using the app (and screenshots cleanly for the report).
  */
 const ApiLogPanel = () => {
-  const { entries, clear } = useApiLog();
+  const { entries, clear } = useApiLog()
 
-  const okCount = entries.filter((e) => e.ok).length;
-  const failCount = entries.length - okCount;
+  const okCount = entries.filter((e) => e.ok).length
+  const failCount = entries.length - okCount
   const avgMs = entries.length
     ? entries.reduce((sum, e) => sum + e.durationMs, 0) / entries.length
-    : 0;
+    : 0
 
   return (
     <aside className="log-panel" aria-label="API activity console">
       <div className="log-head">
-        <span className="log-title">
-          <span className="log-live" aria-hidden="true" />
-          API Activity
-        </span>
-        <span className="log-count tnum">{entries.length}</span>
-        <span className="grow" />
+        <span className="log-live" aria-hidden="true" />
+        <span className="log-title">API Activity</span>
+        <span className="log-count">{entries.length}</span>
         <button
-          className="btn btn-ghost btn-sm"
+          type="button"
+          className="log-clear"
           onClick={clear}
           disabled={!entries.length}
           title="Clear log"
         >
-          <IconTrash />
+          Clear
         </button>
       </div>
 
       <div className="log-list">
         {entries.length === 0 ? (
           <p className="log-empty">
-            No requests yet.
+            Waiting for requests…
             <br />
-            Every API call appears here with its status and response time.
+            <span>
+              Every call to the Express API appears here with its status code
+              and response time.
+            </span>
           </p>
         ) : (
           entries.map((e) => (
-            <div className="log-row" key={e.id}>
-              <span className={`log-method m-${e.method}`}>{e.method}</span>
-              <span className="log-path" title={e.path}>{shortPath(e.path)}</span>
-              <span className="log-right">
-                <span className={`log-status tnum ${statusClass(e.status)}`}>
+            <div className={`log-row${e.ok ? '' : ' log-row--bad'}`} key={e.id}>
+              <span className="log-line">
+                <span className={`log-method m-${e.method}`}>{e.method}</span>
+                <span className="log-path" title={e.path}>
+                  {shortPath(e.path)}
+                </span>
+                <span className={`log-status ${statusClass(e.status)}`}>
                   {e.status || 'ERR'}
                 </span>
-                <span className="log-ms tnum">{formatMs(e.durationMs)}</span>
               </span>
-              {/* Server message on a second line when the call failed */}
+              <span className="log-meta">
+                <span>{clockTime(e.at)}</span>
+                <span className="log-ms">{formatMs(e.durationMs)}</span>
+              </span>
               {!e.ok && e.message && (
-                <span className="log-msg" title={e.message}>↳ {e.message}</span>
+                <span className="log-msg" title={e.message}>
+                  ↳ {e.message}
+                </span>
               )}
             </div>
           ))
@@ -83,15 +94,14 @@ const ApiLogPanel = () => {
       </div>
 
       <div className="log-foot">
-        <span className="tnum">
-          {okCount} ok · {failCount} failed
+        <span>
+          <strong className="ok">{okCount}</strong> ok ·{' '}
+          <strong className={failCount ? 'bad' : ''}>{failCount}</strong> failed
         </span>
-        <span className="tnum">
-          {entries.length ? `avg ${formatMs(avgMs)}` : 'idle'}
-        </span>
+        <span>{entries.length ? `avg ${formatMs(avgMs)}` : 'idle'}</span>
       </div>
     </aside>
-  );
-};
+  )
+}
 
-export default ApiLogPanel;
+export default ApiLogPanel

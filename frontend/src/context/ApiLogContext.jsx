@@ -1,39 +1,49 @@
-import { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { onApiLog } from '../lib/api';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react'
+import {
+  onApiLog,
+  installFetchLogger,
+  getBuffer,
+  clearBuffer,
+} from '../lib/apiLog'
 
-/**
- * ApiLogContext — collects the log records emitted by lib/api.js so the
- * console panel can render live request activity next to the UI.
- * Capped at MAX_ENTRIES so a long session cannot grow unbounded.
- */
-const MAX_ENTRIES = 60;
+// Patch fetch at module scope so requests fired during the very first render
+// are captured too.
+installFetchLogger()
 
-const ApiLogContext = createContext(null);
+const MAX_ENTRIES = 60
+const ApiLogContext = createContext(null)
 
 export const ApiLogProvider = ({ children }) => {
-  const [entries, setEntries] = useState([]);
-  const [visible, setVisible] = useState(true);
+  // Newest first — reads like a terminal.
+  const [entries, setEntries] = useState(() =>
+    getBuffer().slice(-MAX_ENTRIES).reverse()
+  )
+  const [visible, setVisible] = useState(true)
 
-  useEffect(() => {
-    // onApiLog returns its own unsubscribe, so StrictMode's double-mount
-    // cannot leave a duplicate listener behind.
-    return onApiLog((record) => {
-      setEntries((prev) => [record, ...prev].slice(0, MAX_ENTRIES));
-    });
-  }, []);
+  useEffect(
+    () =>
+      onApiLog((entry) =>
+        setEntries((prev) => [entry, ...prev].slice(0, MAX_ENTRIES))
+      ),
+    []
+  )
 
-  const clear = useCallback(() => setEntries([]), []);
-  const toggle = useCallback(() => setVisible((v) => !v), []);
+  const clear = useCallback(() => {
+    clearBuffer()
+    setEntries([])
+  }, [])
+
+  const toggle = useCallback(() => setVisible((v) => !v), [])
 
   return (
     <ApiLogContext.Provider value={{ entries, clear, visible, toggle }}>
       {children}
     </ApiLogContext.Provider>
-  );
-};
+  )
+}
 
 export const useApiLog = () => {
-  const ctx = useContext(ApiLogContext);
-  if (!ctx) throw new Error('useApiLog must be used inside <ApiLogProvider>');
-  return ctx;
-};
+  const ctx = useContext(ApiLogContext)
+  if (!ctx) throw new Error('useApiLog must be used inside an ApiLogProvider')
+  return ctx
+}
