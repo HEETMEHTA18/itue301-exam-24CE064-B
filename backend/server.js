@@ -41,7 +41,7 @@ app.use('/api/v1/bookings', require('./routes/bookings'));   // protected per-ro
 
 // Health check — also reports live DB state, useful for hosting probes.
 const DB_STATES = ['disconnected', 'connected', 'connecting', 'disconnecting'];
-app.get('/', (req, res) => res.json({
+app.get('/api/health', (req, res) => res.json({
   message: 'FitZone API running',
   version: 'v1',
   database: DB_STATES[mongoose.connection.readyState] || 'unknown',
@@ -56,6 +56,27 @@ app.get('/', (req, res) => res.json({
     'PATCH  /api/v1/bookings/:id/status'
   ]
 }));
+
+// ---------------------------------------------------------------------------
+// Static frontend hosting (production convenience).
+// If the React build exists, Express serves it from the SAME origin —
+// one URL for app + API and no CORS configuration needed.
+// In dev (no dist folder) this block is skipped entirely.
+// ---------------------------------------------------------------------------
+const fs = require('fs');
+const path = require('path');
+const DIST_DIR = path.join(__dirname, '..', 'frontend', 'dist');
+
+if (fs.existsSync(path.join(DIST_DIR, 'index.html'))) {
+  // serve hashed assets + index.html
+  app.use(express.static(DIST_DIR));
+
+  // SPA fallback: any non-API GET returns index.html so /classes,
+  // /my-bookings, /admin work on refresh/deep-link.
+  app.get(/^\/(?!api(\/|$)).*/, (req, res) => {
+    res.sendFile(path.join(DIST_DIR, 'index.html'));
+  });
+}
 
 // Unknown route -> JSON 404 instead of Express's default HTML page.
 app.use((req, res) => {
