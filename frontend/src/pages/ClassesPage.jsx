@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
+import { apiFetch } from '../lib/apiBase'
 import TrainerCard from '../components/TrainerCard'
 
 // ClassesPage: fetches trainers from API, shows loading/error states,
@@ -30,7 +31,7 @@ const ClassesPage = () => {
   const fetchTrainers = async () => {
     setLoading(true)
     try {
-      const res = await fetch('/api/v1/trainers')
+      const res = await apiFetch('/trainers')
       const data = await res.json()
       if (res.ok) {
         setTrainers(data.trainers)
@@ -55,7 +56,7 @@ const ClassesPage = () => {
     e.preventDefault()
     setMessage(null)
     try {
-      const res = await fetch('/api/v1/bookings', {
+      const res = await apiFetch('/bookings', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

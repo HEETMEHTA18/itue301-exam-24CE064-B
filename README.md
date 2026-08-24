@@ -105,3 +105,4 @@ Status codes: 200 OK · 201 Created · 400 validation · 401 unauthenticated · 
 - **Validation**: all three Mongoose schemas enforce required/enum/minlength; errors are caught by the global error handler and returned as readable JSON (400), never raw stack traces.
 - **Booking integrity**: memberId always comes from the JWT (not the body); unavailable trainers are rejected (409); trainer+date+timeSlot clashes are rejected (409) — no double bookings.
 - **Frontend**: protected routes redirect to `/`; ClassesPage keeps `trainers/loading/error` states and filters client-side without refetching; AdminPanel is lazy-loaded.
+

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { apiFetch } from '../lib/apiBase'
 
 // LoginPage: email + password login that calls POST /api/v1/auth/login
 const LoginPage = () => {
@@ -14,7 +15,7 @@ const LoginPage = () => {
     e.preventDefault()
     setError(null)
     try {
-      const res = await fetch('/api/v1/auth/login', {
+      const res = await apiFetch('/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),

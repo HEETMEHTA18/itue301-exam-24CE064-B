@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
+import { apiFetch } from '../lib/apiBase'
 
 // AdminPanel: lazy-loaded via React.lazy + Suspense in App.jsx.
 // Admin-only view: roster stats + ALL bookings with status management.
@@ -21,7 +22,7 @@ const AdminPanel = () => {
   const fetchAllBookings = async () => {
     setLoading(true)
     try {
-      const res = await fetch('/api/v1/bookings', {
+      const res = await apiFetch('/bookings', {
         headers: { Authorization: `Bearer ${token}` },
       })
       const data = await res.json()
@@ -40,7 +41,7 @@ const AdminPanel = () => {
 
   const updateStatus = async (id, status) => {
     try {
-      const res = await fetch(`/api/v1/bookings/${id}/status`, {
+      const res = await apiFetch(`/bookings/${id}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
+import { apiFetch } from '../lib/apiBase'
 
 // MyBookingsPage: protected page showing logged-in member's bookings.
 // API returns populated memberId + trainerId (name, email, specialization).
@@ -19,7 +20,7 @@ const MyBookingsPage = () => {
   const fetchMyBookings = async () => {
     setLoading(true)
     try {
-      const res = await fetch('/api/v1/bookings/my', {
+      const res = await apiFetch('/bookings/my', {
         headers: { Authorization: `Bearer ${token}` },
       })
       const data = await res.json()
@@ -39,7 +40,7 @@ const MyBookingsPage = () => {
   // Cancel a booking via PATCH /api/v1/bookings/:id/status
   const cancelBooking = async (id) => {
     try {
-      const res = await fetch(`/api/v1/bookings/${id}/status`, {
+      const res = await apiFetch(`/bookings/${id}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
