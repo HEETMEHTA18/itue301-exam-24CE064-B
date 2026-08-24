@@ -3,6 +3,11 @@
 ITUE301: Advanced Web Development Frameworks — Open-Book Practical Exam (Set B)
 React frontend · Express.js backend · MongoDB Atlas with Mongoose
 
+## Screenshots
+
+### ClassesPage — trainer cards with availability badges + booking panel
+![ClassesPage with TrainerCards](frontend/public/image.png)
+
 ## Quick Start
 
 ### Prerequisites
