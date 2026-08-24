@@ -64,7 +64,6 @@ app.get('/api/health', (req, res) => res.json({
 // In dev (no dist folder) this block is skipped entirely.
 // ---------------------------------------------------------------------------
 const fs = require('fs');
-const path = require('path');
 const DIST_DIR = path.join(__dirname, '..', 'frontend', 'dist');
 
 if (fs.existsSync(path.join(DIST_DIR, 'index.html'))) {
