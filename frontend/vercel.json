@@ -1,0 +1,9 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://itue301-exam-24ce064-b.onrender.com/api/:path*"
+    }
+  ]
+}
