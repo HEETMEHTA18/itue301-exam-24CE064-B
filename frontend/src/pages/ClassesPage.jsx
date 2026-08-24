@@ -4,6 +4,8 @@ import TrainerCard from '../components/TrainerCard'
 
 // ClassesPage: fetches trainers from API, shows loading/error states,
 // client-side search by specialization, and a booking form.
+const TIME_SLOTS = ['06:00-07:00', '08:00-09:00', '10:00-11:00', '17:00-18:00', '19:00-20:00']
+
 const ClassesPage = () => {
   const { member, token } = useAuth()
 
@@ -12,7 +14,7 @@ const ClassesPage = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  // Task 2: search + booking form state
+  // Task 2: search + booking form state (selected trainer & time slot shown live)
   const [search, setSearch] = useState('')
   const [selectedTrainer, setSelectedTrainer] = useState(null)
   const [selectedTimeSlot, setSelectedTimeSlot] = useState('')
@@ -60,7 +62,6 @@ const ClassesPage = () => {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          memberId: member.id,
           trainerId: selectedTrainer._id,
           className,
           date,
@@ -69,7 +70,7 @@ const ClassesPage = () => {
       })
       const data = await res.json()
       if (res.status === 201) {
-        setMessage({ ok: true, text: `Booked ${className} with ${selectedTrainer.name}!` })
+        setMessage({ ok: true, text: `Booked ${className} with ${selectedTrainer.name}, ${date} ${selectedTimeSlot}.` })
         setClassName('')
         setDate('')
         setSelectedTimeSlot('')
@@ -82,88 +83,104 @@ const ClassesPage = () => {
   }
 
   return (
-    <div style={{ padding: 20 }}>
-      <h2>FitZone — Available Classes</h2>
+    <div className="page">
+      <div className="page-head">
+        <div>
+          <h2>Book a Class</h2>
+          <p>Pick a trainer, choose your slot — no more WhatsApp double-bookings.</p>
+        </div>
+      </div>
 
-      {/* Search input filters the ALREADY-fetched array */}
-      <input
-        type="text"
-        placeholder="Search by specialization (e.g. Yoga)..."
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        style={{ width: 320, padding: 8, marginBottom: 16 }}
-      />
+      <div className="toolbar">
+        <input
+          type="text"
+          className="input search"
+          placeholder="Search by specialization (e.g. Yoga)..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        {/* derived count proves filtering happens client-side */}
+        <span style={{ color: 'var(--ink-soft)', fontSize: 13.5 }}>
+          Showing {filteredTrainers.length} of {trainers.length} trainers
+        </span>
+      </div>
+
+      {message && (
+        <div className={`alert ${message.ok ? 'alert--success' : 'alert--error'}`}>{message.text}</div>
+      )}
 
       {/* Loading state */}
-      {loading && <p>Loading trainers...</p>}
+      {loading && (
+        <div className="loading"><span className="spinner" />Loading trainers...</div>
+      )}
 
       {/* Error state */}
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+      {error && <div className="alert alert--error">{error}</div>}
 
       {/* Success: render TrainerCards from API data (not hardcoded) */}
       {!loading && !error && (
-        <>
-          {filteredTrainers.length === 0 ? (
-            <p>No trainers match "{search}"</p>
-          ) : (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
-              {filteredTrainers.map((trainer) => (
-                <TrainerCard
-                  key={trainer._id}
-                  name={trainer.name}
-                  specialization={trainer.specialization}
-                  available={trainer.available}
-                  onSelect={() => setSelectedTrainer(trainer)}
-                  selected={selectedTrainer?._id === trainer._id}
-                />
-              ))}
-            </div>
-          )}
-        </>
+        filteredTrainers.length === 0 ? (
+          <div className="alert alert--muted">No trainers match "{search}".</div>
+        ) : (
+          <div className="grid-cards">
+            {filteredTrainers.map((trainer) => (
+              <TrainerCard
+                key={trainer._id}
+                name={trainer.name}
+                specialization={trainer.specialization}
+                available={trainer.available}
+                onSelect={() =>
+                  setSelectedTrainer((prev) => (prev?._id === trainer._id ? null : trainer))
+                }
+                selected={selectedTrainer?._id === trainer._id}
+              />
+            ))}
+          </div>
+        )
       )}
 
-      {/* Booking form (Task 2): two meaningful states shown live below */}
+      {/* Booking form */}
       {member && !loading && (
-        <div style={{ marginTop: 24, maxWidth: 420 }}>
-          <h3>Book a Class</h3>
-          <p>
-            Selected trainer:{' '}
-            <strong>{selectedTrainer ? `${selectedTrainer.name} (${selectedTrainer.specialization})` : 'none yet — click a card above'}</strong>
-          </p>
-          <form onSubmit={handleBook}>
-            <input
-              type="text"
-              placeholder="Class name (e.g. Morning Yoga)"
-              value={className}
-              onChange={(e) => setClassName(e.target.value)}
-              required
-              style={{ width: '100%', padding: 8, marginBottom: 8 }}
-            />
-            <input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              required
-              style={{ width: '100%', padding: 8, marginBottom: 8 }}
-            />
-            <select
-              value={selectedTimeSlot}
-              onChange={(e) => setSelectedTimeSlot(e.target.value)}
-              required
-              style={{ width: '100%', padding: 8, marginBottom: 8 }}
-            >
-              <option value="">Select time slot</option>
-              <option value="06:00-07:00">06:00-07:00</option>
-              <option value="08:00-09:00">08:00-09:00</option>
-              <option value="10:00-11:00">10:00-11:00</option>
-              <option value="17:00-18:00">17:00-18:00</option>
-              <option value="19:00-20:00">19:00-20:00</option>
-            </select>
-            <button type="submit" disabled={!selectedTrainer}>Book Class</button>
-          </form>
-          {message && (
-            <p style={{ color: message.ok ? 'green' : 'red' }}>{message.text}</p>
-          )}
+        <div className="split">
+          <div />
+          <div className="card">
+            <h3>Booking details</h3>
+            <div className="selected-note">
+              {selectedTrainer
+                ? `Trainer: ${selectedTrainer.name} — ${selectedTrainer.specialization}`
+                : 'Click a trainer card above to select.'}
+            </div>
+            <form onSubmit={handleBook}>
+              <div className="field">
+                <label htmlFor="className">Class name</label>
+                <input
+                  id="className" type="text" className="input"
+                  placeholder="e.g. Morning Yoga Flow"
+                  value={className} onChange={(e) => setClassName(e.target.value)} required
+                />
+              </div>
+              <div className="field">
+                <label htmlFor="date">Date</label>
+                <input
+                  id="date" type="date" className="input"
+                  value={date} onChange={(e) => setDate(e.target.value)} required
+                />
+              </div>
+              <div className="field">
+                <label htmlFor="slot">Time slot</label>
+                <select
+                  id="slot" className="input"
+                  value={selectedTimeSlot} onChange={(e) => setSelectedTimeSlot(e.target.value)} required
+                >
+                  <option value="">Select a slot</option>
+                  {TIME_SLOTS.map((s) => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+              <button type="submit" className="btn btn--primary btn--block" disabled={!selectedTrainer}>
+                Confirm Booking
+              </button>
+            </form>
+          </div>
         </div>
       )}
     </div>

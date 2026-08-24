@@ -33,45 +33,57 @@ const LoginPage = () => {
   }
 
   return (
-    <div style={{ maxWidth: 400, margin: '40px auto', padding: 20 }}>
-      <h2>FitZone Login</h2>
-      {member ? (
-        <div>
-          <p>Welcome, <strong>{member.name}</strong> ({member.role})</p>
-          <button onClick={logout}>Logout</button>
-        </div>
-      ) : (
-        <form onSubmit={handleLogin}>
-          <div style={{ marginBottom: 10 }}>
-            <label>Email:</label><br />
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="heet@fitzone.com"
-              required
-              style={{ width: '100%', padding: 8 }}
-            />
+    <div className="page">
+      <div className="card form-card">
+        <h2>Welcome back</h2>
+        <p style={{ color: 'var(--ink-soft)', marginBottom: 18 }}>
+          Sign in to book trainer-led classes.
+        </p>
+
+        {member ? (
+          <div className="stack">
+            <div className="alert alert--success">
+              Logged in as <strong>{member.name}</strong> ({member.role})
+            </div>
+            <button className="btn btn--ghost btn--block" onClick={logout}>Logout</button>
           </div>
-          <div style={{ marginBottom: 10 }}>
-            <label>Password:</label><br />
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="fitzone123"
-              required
-              minLength={8}
-              style={{ width: '100%', padding: 8 }}
-            />
-          </div>
-          {error && <p style={{ color: 'red' }}>{error}</p>}
-          <button type="submit">Login</button>
-          <p style={{ fontSize: 12, marginTop: 10 }}>
-            Demo accounts are listed in the README.
-          </p>
-        </form>
-      )}
+        ) : (
+          <form onSubmit={handleLogin}>
+            <div className="field">
+              <label htmlFor="email">Email</label>
+              <input
+                id="email"
+                type="email"
+                className="input"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@fitzone.com"
+                required
+              />
+            </div>
+            <div className="field">
+              <label htmlFor="password">Password</label>
+              <input
+                id="password"
+                type="password"
+                className="input"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                required
+                minLength={8}
+              />
+            </div>
+
+            {error && <div className="alert alert--error">{error}</div>}
+
+            <button type="submit" className="btn btn--primary btn--block">Sign In</button>
+            <p className="hint">
+              Demo accounts are listed in the project README.
+            </p>
+          </form>
+        )}
+      </div>
     </div>
   )
 }

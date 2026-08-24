@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react'
-import { BrowserRouter, Routes, Route, Link, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Link, NavLink, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import LoginPage from './pages/LoginPage'
 import ClassesPage from './pages/ClassesPage'
@@ -8,24 +8,36 @@ import MyBookingsPage from './pages/MyBookingsPage'
 // Lazy loading: AdminPanel code is only fetched when /admin is first visited
 const AdminPanel = lazy(() => import('./pages/AdminPanel'))
 
-// Navigation uses <Link> (client-side routing, NO full page reload)
+// Navigation uses <Link>/<NavLink> (client-side routing, NO full page reload)
 const Navigation = () => {
   const { member, logout } = useAuth()
+  const initials = member
+    ? member.name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()
+    : ''
+
   return (
-    <nav style={{ padding: '10px 20px', background: '#222', display: 'flex', gap: 20, alignItems: 'center' }}>
-      <strong style={{ color: '#fff' }}>FitZone</strong>
+    <nav className="nav">
+      <Link to="/" className="nav__brand">Fit<span>Zone</span></Link>
       {member ? (
         <>
-          <Link to="/classes" style={{ color: '#9cf' }}>Classes</Link>
-          <Link to="/my-bookings" style={{ color: '#9cf' }}>My Bookings</Link>
-          {member.role === 'admin' && (
-            <Link to="/admin" style={{ color: '#fc6' }}>Admin Panel</Link>
-          )}
-          <span style={{ color: '#aaa', marginLeft: 'auto' }}>{member.name}</span>
-          <button onClick={logout}>Logout</button>
+          <div className="nav__links">
+            <NavLink to="/classes" className={({ isActive }) => `nav__link${isActive ? ' nav__link--active' : ''}`}>Classes</NavLink>
+            <NavLink to="/my-bookings" className={({ isActive }) => `nav__link${isActive ? ' nav__link--active' : ''}`}>My Bookings</NavLink>
+            {member.role === 'admin' && (
+              <NavLink to="/admin" className={({ isActive }) => `nav__link${isActive ? ' nav__link--active' : ''}`}>Admin Panel</NavLink>
+            )}
+          </div>
+          <div className="nav__spacer" />
+          <div className="nav__user">
+            <span>{member.name}</span>
+            <span className="avatar" title={member.email}>{initials}</span>
+            <button className="btn btn--ghost btn--sm" style={{ color: '#fff', borderColor: '#33415a' }} onClick={logout}>
+              Logout
+            </button>
+          </div>
         </>
       ) : (
-        <Link to="/" style={{ color: '#9cf' }}>Login</Link>
+        <div className="nav__spacer" />
       )}
     </nav>
   )
@@ -38,6 +50,7 @@ const ProtectedRoute = ({ children }) => {
   return children
 }
 
+// AdminRoute: requires login AND admin role
 const AdminRoute = ({ children }) => {
   const { member } = useAuth()
   if (!member) return <Navigate to="/" replace />
@@ -51,19 +64,15 @@ function App() {
       <AuthProvider>
         <Navigation />
         {/* Suspense shows fallback while the lazy chunk downloads */}
-        <Suspense fallback={<p style={{ padding: 20 }}>Loading Admin Panel...</p>}>
+        <Suspense fallback={
+          <div className="page"><div className="loading"><span className="spinner" />Loading Admin Panel...</div></div>
+        }>
           <Routes>
             <Route path="/" element={<LoginPage />} />
             <Route path="/login" element={<LoginPage />} />
-            <Route path="/classes" element={
-              <ProtectedRoute><ClassesPage /></ProtectedRoute>
-            } />
-            <Route path="/my-bookings" element={
-              <ProtectedRoute><MyBookingsPage /></ProtectedRoute>
-            } />
-            <Route path="/admin" element={
-              <AdminRoute><AdminPanel /></AdminRoute>
-            } />
+            <Route path="/classes" element={<ProtectedRoute><ClassesPage /></ProtectedRoute>} />
+            <Route path="/my-bookings" element={<ProtectedRoute><MyBookingsPage /></ProtectedRoute>} />
+            <Route path="/admin" element={<AdminRoute><AdminPanel /></AdminRoute>} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>

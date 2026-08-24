@@ -3,6 +3,8 @@ import { useAuth } from '../context/AuthContext'
 
 // MyBookingsPage: protected page showing logged-in member's bookings.
 // API returns populated memberId + trainerId (name, email, specialization).
+const STATUS_PILL = { booked: 'pill--booked', attended: 'pill--attended', cancelled: 'pill--cancelled' }
+
 const MyBookingsPage = () => {
   const { member, token } = useAuth()
   const [bookings, setBookings] = useState([])
@@ -52,40 +54,53 @@ const MyBookingsPage = () => {
   }
 
   return (
-    <div style={{ padding: 20 }}>
-      <h2>My Bookings — {member ? member.name : ''}</h2>
+    <div className="page">
+      <div className="page-head">
+        <div>
+          <h2>My Bookings</h2>
+          <p>{member ? `Signed in as ${member.name} (${member.email})` : ''}</p>
+        </div>
+      </div>
 
-      {loading && <p>Loading your bookings...</p>}
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+      <div className="card stack">
+        {loading && <div className="loading"><span className="spinner" />Loading your bookings...</div>}
+        {error && <div className="alert alert--error">{error}</div>}
 
-      {!loading && !error && bookings.length === 0 && (
-        <p>No bookings yet. Go to Classes and book one!</p>
-      )}
+        {!loading && !error && bookings.length === 0 && (
+          <div className="alert alert--muted">No bookings yet. Head to Classes and book your first session!</div>
+        )}
 
-      <table cellPadding={8} style={{ borderCollapse: 'collapse', marginTop: 12 }}>
-        <thead>
-          <tr style={{ background: '#f0f0f0', textAlign: 'left' }}>
-            <th>Class</th><th>Trainer</th><th>Date</th><th>Time Slot</th><th>Status</th><th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {bookings.map((b) => (
-            <tr key={b._id} style={{ borderBottom: '1px solid #ddd' }}>
-              <td>{b.className}</td>
-              {/* populated trainerId gives name + specialization */}
-              <td>{b.trainerId ? `${b.trainerId.name} (${b.trainerId.specialization})` : 'N/A'}</td>
-              <td>{new Date(b.date).toLocaleDateString()}</td>
-              <td>{b.timeSlot}</td>
-              <td>{b.status}</td>
-              <td>
-                {b.status === 'booked' && (
-                  <button onClick={() => cancelBooking(b._id)}>Cancel</button>
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+        {!loading && bookings.length > 0 && (
+          <div className="table-wrap">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Class</th><th>Trainer</th><th>Date</th><th>Time Slot</th><th>Status</th><th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {bookings.map((b) => (
+                  <tr key={b._id}>
+                    <td><strong>{b.className}</strong></td>
+                    {/* populated trainerId gives name + specialization */}
+                    <td>{b.trainerId ? `${b.trainerId.name} · ${b.trainerId.specialization}` : 'N/A'}</td>
+                    <td>{new Date(b.date).toLocaleDateString('en-GB')}</td>
+                    <td>{b.timeSlot}</td>
+                    <td><span className={`pill ${STATUS_PILL[b.status] || 'pill--basic'}`}>{b.status}</span></td>
+                    <td style={{ textAlign: 'right' }}>
+                      {b.status === 'booked' && (
+                        <button className="btn btn--danger btn--sm" onClick={() => cancelBooking(b._id)}>
+                          Cancel
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
